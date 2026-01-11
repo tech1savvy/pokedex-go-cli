@@ -11,21 +11,11 @@ import (
 	"github.com/tech1savvy/pokedex-go-cli/internal/pokecache"
 )
 
-type PokeAPIResponse struct {
-	Count    int     `json:"count"`
-	Next     *string `json:"next"`
-	Previous *string `json:"previous"`
-	Results  []struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
-	} `json:"results"`
-}
-
 type Client struct {
 	cache *pokecache.Cache
 }
 
-// NewClient returns pointer to new Client struct initialized
+// NewClient creats a new client to communicate with pokeapi
 func NewClient() *Client {
 	client := &Client{}
 	cache := pokecache.NewCache(2 * time.Millisecond)
@@ -33,43 +23,46 @@ func NewClient() *Client {
 	return client
 }
 
-func (c *Client) GetLocationAreas(url string) (next string, prev string, err error) {
-	// TODO: Check cache first
-	_, ok := c.cache.Get(url)
-	if ok {
-		// TODO: Get values form byte cache
-		return "", "", nil
+type LocationAreas struct {
+	Next     string `json:"next"`
+	Previous string `json:"previous,omitempty"`
+	Results  []struct {
+		Name string `json:"name"`
+	} `json:"results"`
+}
+
+func (c *Client) GetLocationAreas(url string) (LocationAreas, error) {
+	var body []byte
+
+	cachedBody, ok := c.cache.Get(url)
+	if !ok {
+		// Cache Miss
+		res, err := http.Get(url)
+		if err != nil {
+			return LocationAreas{}, fmt.Errorf("error making api request: %w", err)
+		}
+		defer res.Body.Close()
+
+		resbody, err := io.ReadAll(res.Body)
+		if err != nil {
+			return LocationAreas{}, fmt.Errorf("error parsing response body: %w", err)
+		}
+		if res.StatusCode > 299 {
+			return LocationAreas{}, fmt.Errorf("response failed with  status code: %d and\nbody: %s", res.StatusCode, resbody)
+		}
+		body = resbody
+	} else {
+		// Cache Hit
+		body = cachedBody
 	}
 
-	res, err := http.Get(url)
-	if err != nil {
-		return "", "", fmt.Errorf("error making api request: %w", err)
-	}
-	defer res.Body.Close()
+	// Create or Update cache
+	c.cache.Add(url, body)
 
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", "", fmt.Errorf("error parsing response body: %w", err)
-	}
-	if res.StatusCode > 299 {
-		return "", "", fmt.Errorf("response failed with  status code: %d and\nbody: %s", res.StatusCode, body)
+	var jsonBody LocationAreas
+	if err := json.Unmarshal(body, &jsonBody); err != nil {
+		return LocationAreas{}, fmt.Errorf("failed to decode res.Body to json: %w", err)
 	}
 
-	data := PokeAPIResponse{}
-	if err := json.Unmarshal(body, &data); err != nil {
-		return "", "", fmt.Errorf("failed to decode res.Body to json: %w", err)
-	}
-
-	for _, result := range data.Results {
-		fmt.Println(result.Name)
-	}
-
-	if data.Next != nil {
-		next = *data.Next
-	}
-	if data.Previous != nil {
-		prev = *data.Previous
-	}
-
-	return next, prev, nil
+	return jsonBody, nil
 }
