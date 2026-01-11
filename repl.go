@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -11,7 +12,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *config) error
+	callback    func(c *config, params ...string) error
 }
 
 type config struct {
@@ -35,13 +36,13 @@ func cleanInput(input string) []string {
 	return result
 }
 
-func commandExit(c *config) error {
+func commandExit(c *config, params ...string) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(c *config) error {
+func commandHelp(c *config, params ...string) error {
 	// TODO: Dynamically generate the "usage" section by iterating over my registry of commands.
 	// NOTE: How to access the registry/map of cmds inside help cmmand callback?
 	msg := `
@@ -54,7 +55,7 @@ exit: Exit the Pokedex
 	return nil
 }
 
-func commandMap(c *config) error {
+func commandMap(c *config, params ...string) error {
 	url := "https://pokeapi.co/api/v2/location-area" // GET first 20
 	if c.next != "" {
 		url = c.next // Get next 20
@@ -71,7 +72,7 @@ func commandMap(c *config) error {
 	return nil
 }
 
-func commandMapB(c *config) error {
+func commandMapB(c *config, params ...string) error {
 	if c.prev == "" {
 		fmt.Println("You're on the first page!")
 		return nil
@@ -83,6 +84,13 @@ func commandMapB(c *config) error {
 	c.prev = prev
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func commandExplore(c *config, params ...string) error {
+	if params[0] == "" {
+		return errors.New("no location or area provided")
 	}
 	return nil
 }

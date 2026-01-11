@@ -32,6 +32,11 @@ func main() {
 			"Display Previous Locations",
 			commandMapB,
 		},
+		"explore": {
+			"explore",
+			"Explore a Location's Pokemon",
+			commandExplore,
+		},
 	}
 	client := pokeapi.NewClient()
 	cfg.client = client
@@ -52,7 +57,13 @@ func main() {
 			fmt.Println("Unknown command")
 			continue
 		}
-		if err := cmds[input[0]].callback(cfg); err != nil {
+
+		var params []string
+		if len(input) > 1 {
+			params = input[1:]
+		}
+
+		if err := cmds[input[0]].callback(cfg, params...); err != nil {
 			fmt.Println(err)
 		}
 
