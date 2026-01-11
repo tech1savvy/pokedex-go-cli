@@ -2,7 +2,6 @@
 package pokeapi
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,15 +22,7 @@ func NewClient() *Client {
 	return client
 }
 
-type LocationAreas struct {
-	Next     string `json:"next"`
-	Previous string `json:"previous,omitempty"`
-	Results  []struct {
-		Name string `json:"name"`
-	} `json:"results"`
-}
-
-func (c *Client) GetLocationAreas(url string) (LocationAreas, error) {
+func (c *Client) Get(url string) ([]byte, error) {
 	var body []byte
 
 	cachedBody, ok := c.cache.Get(url)
@@ -39,16 +30,16 @@ func (c *Client) GetLocationAreas(url string) (LocationAreas, error) {
 		// Cache Miss
 		res, err := http.Get(url)
 		if err != nil {
-			return LocationAreas{}, fmt.Errorf("error making api request: %w", err)
+			return []byte{}, fmt.Errorf("error making api request: %w", err)
 		}
 		defer res.Body.Close()
 
 		resbody, err := io.ReadAll(res.Body)
 		if err != nil {
-			return LocationAreas{}, fmt.Errorf("error parsing response body: %w", err)
+			return []byte{}, fmt.Errorf("error parsing response body: %w", err)
 		}
 		if res.StatusCode > 299 {
-			return LocationAreas{}, fmt.Errorf("response failed with  status code: %d and\nbody: %s", res.StatusCode, resbody)
+			return []byte{}, fmt.Errorf("response failed with  status code: %d and\nbody: %s", res.StatusCode, resbody)
 		}
 		body = resbody
 	} else {
@@ -59,10 +50,5 @@ func (c *Client) GetLocationAreas(url string) (LocationAreas, error) {
 	// Create or Update cache
 	c.cache.Add(url, body)
 
-	var jsonBody LocationAreas
-	if err := json.Unmarshal(body, &jsonBody); err != nil {
-		return LocationAreas{}, fmt.Errorf("failed to decode res.Body to json: %w", err)
-	}
-
-	return jsonBody, nil
+	return body, nil
 }
