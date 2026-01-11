@@ -47,7 +47,6 @@ func main() {
 		if len(input) == 0 {
 			continue
 		}
-		fmt.Println()
 
 		if _, ok := cmds[input[0]]; !ok {
 			fmt.Println("Unknown command")
