@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -90,7 +89,8 @@ func commandMapB(c *config, params ...string) error {
 
 func commandExplore(c *config, params ...string) error {
 	if params[0] == "" {
-		return errors.New("no location or area provided")
+		fmt.Println("Please proved a location or area name")
+		return nil
 	}
 	return nil
 }
