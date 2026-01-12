@@ -61,11 +61,15 @@ func commandMap(c *config, params ...string) error {
 	}
 
 	c.prev = url
-	next, prev, err := c.client.GetLocationAreas(url)
-	c.next = next
-	c.prev = prev
+	locationAreas, err := c.client.GetLocationAreas(url)
+	c.next = locationAreas.Next
+	c.prev = locationAreas.Previous
 	if err != nil {
 		return err
+	}
+
+	for i := range len(locationAreas.Results) {
+		fmt.Println(locationAreas.Results[i].Name)
 	}
 
 	return nil
@@ -78,19 +82,41 @@ func commandMapB(c *config, params ...string) error {
 	}
 	url := c.prev
 
-	next, prev, err := c.client.GetLocationAreas(url)
-	c.next = next
-	c.prev = prev
+	locationAreas, err := c.client.GetLocationAreas(url)
+	c.next = locationAreas.Next
+	c.prev = locationAreas.Previous
 	if err != nil {
 		return err
 	}
+
+	for i := range len(locationAreas.Results) {
+		fmt.Println(locationAreas.Results[i].Name)
+	}
+
 	return nil
 }
 
 func commandExplore(c *config, params ...string) error {
-	if params[0] == "" {
+	// FIX: index out of range if len(params) == 0
+	location := params[0]
+	if location == "" {
 		fmt.Println("Please proved a location or area name")
 		return nil
 	}
+
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s", location)
+	// TODO: use `pokeapiLocationArea` identifier instead
+	locationArea, err := c.client.GetLocationArea(url)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Exploring %s...\n", location)
+	fmt.Printf("Found Pokemon:\n")
+
+	for _, pokemonEncounter := range locationArea.PokemonEncounters {
+		fmt.Printf("- %v\n", pokemonEncounter.Pokemon.Name)
+	}
+
 	return nil
 }
