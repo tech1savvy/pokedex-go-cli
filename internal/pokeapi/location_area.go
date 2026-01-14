@@ -5,12 +5,12 @@ import (
 	"fmt"
 )
 
-type Pokemon struct {
+type EncounteredPokemon struct {
 	Name string `json:"name"`
 }
 
 type PokemonEncounters struct {
-	Pokemon Pokemon `json:"pokemon"`
+	Pokemon EncounteredPokemon `json:"pokemon"`
 }
 
 type LocationArea struct {
