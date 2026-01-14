@@ -9,7 +9,9 @@ import (
 )
 
 func main() {
-	cfg := &config{}
+	cfg := &config{
+		pokedex: map[string]pokeapi.Pokemon{},
+	}
 
 	cmds := map[string]cliCommand{
 		"exit": {
@@ -36,6 +38,11 @@ func main() {
 			"explore",
 			"Explore a Location's Pokemon",
 			commandExplore,
+		},
+		"catch": {
+			"catch",
+			"Catch a Pokemon",
+			commandCatch,
 		},
 	}
 	client := pokeapi.NewClient()

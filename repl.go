@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 
@@ -15,9 +16,10 @@ type cliCommand struct {
 }
 
 type config struct {
-	client *pokeapi.Client
-	next   string
-	prev   string
+	client  *pokeapi.Client
+	next    string
+	prev    string
+	pokedex map[string]pokeapi.Pokemon
 }
 
 func cleanInput(input string) []string {
@@ -116,6 +118,34 @@ func commandExplore(c *config, params ...string) error {
 
 	for _, pokemonEncounter := range locationArea.PokemonEncounters {
 		fmt.Printf("- %v\n", pokemonEncounter.Pokemon.Name)
+	}
+
+	return nil
+}
+
+func commandCatch(c *config, params ...string) error {
+	if len(params) < 1 {
+		fmt.Println("Please provied a pokemon name")
+		return nil
+	}
+	pokemon := params[0]
+
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", pokemon)
+	pokeapiPokemon, err := c.client.GetPokemon(url)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", pokeapiPokemon.Name)
+
+	// higher baseExperience, the more difficult catch
+	chance := float64(rand.Intn(pokeapiPokemon.BaseExperience+1)) / float64(pokeapiPokemon.BaseExperience) * 10.0
+
+	if chance < 5.0 {
+		fmt.Printf("%s escaped!\n", pokeapiPokemon.Name)
+	} else {
+		fmt.Printf("%s was caught!\n", pokeapiPokemon.Name)
+		c.pokedex[pokeapiPokemon.Name] = pokeapiPokemon
 	}
 
 	return nil
