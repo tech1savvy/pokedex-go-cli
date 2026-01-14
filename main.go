@@ -14,6 +14,7 @@ func main() {
 	}
 
 	cmds := map[string]cliCommand{
+		// TODO: : name field is redundant
 		"exit": {
 			"exit",
 			"Exit the Pokedex",
