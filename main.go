@@ -45,6 +45,11 @@ func main() {
 			"Catch a Pokemon",
 			commandCatch,
 		},
+		"inspect": {
+			"inspect",
+			"See details of a caught pokemon",
+			commandInspect,
+		},
 	}
 	client := pokeapi.NewClient()
 	cfg.client = client
